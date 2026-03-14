@@ -2,45 +2,65 @@
 # -*- coding: utf-8 -*-
 """
 AI 讲课生成器 - 主入口
+
+功能:
+1. 从 URL/PDF/文本获取内容
+2. 提取知识点
+3. 生成讲义和 PPT 大纲
+4. 生成语音 (待实现)
 """
 
 import sys
 import os
+import json
 from pathlib import Path
+from datetime import datetime
 from loguru import logger
 import yaml
 
 # 添加项目路径
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.ollama_client import OllamaClient, PromptTemplates
+from src.ollama_client import OllamaClient
+from src.fetcher import URLFetcher, PDFReader
+from src.processor import ContentParser, KnowledgeExtractor, LectureProcessor
 
 
 class LectureGenerator:
-    """讲课生成器"""
+    """AI 讲课生成器"""
     
     def __init__(self, config_path: str = "config.yaml"):
         """初始化"""
+        # 加载配置
         self.config = self._load_config(config_path)
-        self.client = OllamaClient(
+        
+        # 初始化组件
+        self.ollama = OllamaClient(
             host=self.config['ollama']['host'],
             timeout=self.config['ollama']['timeout']
         )
-        self.prompts = PromptTemplates()
+        self.url_fetcher = URLFetcher()
+        self.pdf_reader = PDFReader()
+        self.parser = ContentParser()
+        self.extractor = KnowledgeExtractor(self.ollama)
+        self.lecture_gen = LectureProcessor(self.ollama)
         
-        # 创建工作目录
+        # 设置工作目录
         self._setup_workspace()
+        
+        # 配置日志
+        self._setup_logging()
         
         logger.info("🦞 AI 讲课生成器初始化完成")
     
-    def _load_config(self, config_path: str) -> Dict:
+    def _load_config(self, config_path: str) -> dict:
         """加载配置"""
         if os.path.exists(config_path):
             with open(config_path, 'r', encoding='utf-8') as f:
                 return yaml.safe_load(f)
         return {
             'ollama': {'host': 'http://192.168.0.214:11434', 'timeout': 120},
-            'workspace': {'root': './workspace'}
+            'workspace': {'root': './workspace', 'output': './workspace/output'}
         }
     
     def _setup_workspace(self):
@@ -56,130 +76,163 @@ class LectureGenerator:
         for d in dirs:
             Path(d).mkdir(parents=True, exist_ok=True)
     
-    def generate(self, source: str, topic: str = None, duration: int = 10, 
-                 voice: str = "teacher_male") -> Dict:
+    def _setup_logging(self):
+        """配置日志"""
+        log_file = Path(self.config['workspace']['root']) / "logs" / "generator.log"
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        logger.remove()  # 移除默认处理器
+        logger.add(sys.stderr, level="INFO")
+        logger.add(log_file, level="DEBUG", rotation="10 MB")
+    
+    def generate(self, source: str, topic: str = None, duration: int = 10,
+                 style: str = "大学讲课") -> dict:
         """
-        生成讲课内容
+        生成完整讲课内容
         
         Args:
             source: 输入源 (URL/PDF 路径/文本)
-            topic: 主题
+            topic: 主题 (可选，会自动提取)
             duration: 时长 (分钟)
-            voice: 音色
+            style: 讲课风格
         
         Returns:
-            生成结果 {lecture_path, audio_path, ppt_path}
+            生成结果 {lecture_path, ppt_path, summary}
         """
-        logger.info(f"开始生成讲课：{topic or source}")
+        start_time = datetime.now()
+        logger.info(f"🎯 开始生成讲课：{topic or source}")
         
-        # 1. 检查连接
-        if not self.client.check_connection():
-            logger.error("Ollama 服务不可用")
-            return {}
+        # 1. 检查 Ollama 连接
+        if not self.ollama.check_connection():
+            logger.error("❌ Ollama 服务不可用")
+            return {"error": "Ollama 服务不可用"}
         
         # 2. 获取内容
+        logger.info("📥 获取内容...")
         content = self._fetch_content(source)
         if not content:
-            logger.error("无法获取内容")
-            return {}
+            logger.error("❌ 无法获取内容")
+            return {"error": "无法获取内容"}
         
-        # 3. 提取知识点
-        key_points = self._extract_knowledge(content)
+        # 3. 解析内容
+        logger.info("📝 解析内容...")
+        parsed = self.parser.parse(content)
+        if not topic:
+            topic = parsed['title'][:50]
+        
+        # 4. 提取知识点
+        logger.info("💡 提取知识点...")
+        key_points = self.extractor.extract(content, max_points=5)
+        if not key_points:
+            # 使用简单提取
+            simple_points = self.extractor.extract_simple(content)
+            key_points = [{"title": p, "summary": "", "level": "入门"} for p in simple_points]
         logger.info(f"提取 {len(key_points)} 个知识点")
         
-        # 4. 生成讲义
-        lecture = self._generate_lecture(key_points, duration)
-        lecture_path = self._save_lecture(lecture, topic)
+        # 5. 生成讲义
+        logger.info("📚 生成讲义...")
+        lecture = self.lecture_gen.generate(topic, key_points, duration, style)
+        lecture_path = self._save_output(lecture, f"{topic}_讲义.md")
         
-        # 5. 生成 PPT 大纲
-        ppt_outline = self._generate_ppt_outline(lecture)
-        ppt_path = self._save_ppt_outline(ppt_outline)
+        # 6. 生成 PPT 大纲
+        logger.info("📊 生成 PPT 大纲...")
+        ppt_outline = self.lecture_gen.generate_ppt_outline(lecture)
+        ppt_path = self._save_json(ppt_outline, f"{topic}_PPT 大纲.json")
         
-        # 6. 生成语音 (待实现)
-        # audio_path = self._generate_audio(lecture, voice)
+        # 7. 生成测试问题
+        logger.info("❓ 生成测试问题...")
+        questions = self.lecture_gen.generate_questions(lecture, count=3)
+        questions_path = self._save_json(questions, f"{topic}_测试题.json")
         
-        logger.info("✅ 生成完成")
+        # 8. 生成摘要
+        logger.info("📋 生成摘要...")
+        summary = self._generate_summary(lecture)
+        
+        elapsed = (datetime.now() - start_time).total_seconds()
+        logger.info(f"✅ 生成完成！耗时：{elapsed:.1f}秒")
         
         return {
             "lecture_path": str(lecture_path),
             "ppt_path": str(ppt_path),
-            "audio_path": None,  # 待实现
+            "questions_path": str(questions_path),
+            "summary": summary,
+            "elapsed_seconds": elapsed,
         }
     
     def _fetch_content(self, source: str) -> str:
         """获取内容"""
         if source.startswith('http'):
-            # TODO: 实现网页抓取
-            return "网页内容待实现..."
+            return self.url_fetcher.fetch(source) or ""
         elif source.endswith('.pdf'):
-            # TODO: 实现 PDF 读取
-            return "PDF 内容待实现..."
+            return self.pdf_reader.read(source) or ""
         else:
             # 直接作为文本
             return source
     
-    def _extract_knowledge(self, content: str) -> List[Dict]:
-        """提取知识点"""
-        prompt = self.prompts.fill("content_extract", text=content[:10000])
-        response = self.client.chat(
-            model="qwen3:8b",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        # TODO: 解析 JSON
-        return [{"title": "知识点", "summary": response[:200], "level": "入门"}]
-    
-    def _generate_lecture(self, key_points: List[Dict], duration: int) -> str:
-        """生成讲义"""
-        prompt = self.prompts.fill(
-            "lecture_generate",
-            key_points=str(key_points),
-            duration=duration,
-            style="大学讲课",
-            audience="大学生"
-        )
-        return self.client.chat(
-            model="qwen3:8b",
-            messages=[{"role": "user", "content": prompt}]
-        )
-    
-    def _generate_ppt_outline(self, lecture: str) -> Dict:
-        """生成 PPT 大纲"""
-        prompt = self.prompts.fill("ppt_outline", lecture_content=lecture[:5000])
-        response = self.client.chat(
-            model="qwen3:8b",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        # TODO: 解析 JSON
-        return {"title": "PPT", "slides": []}
-    
-    def _save_lecture(self, content: str, topic: str) -> Path:
-        """保存讲义"""
-        topic = topic or "lecture"
-        path = Path(self.config['workspace']['output']) / f"{topic}_lecture.md"
+    def _save_output(self, content: str, filename: str) -> Path:
+        """保存输出文件"""
+        output_dir = Path(self.config['workspace']['output'])
+        path = output_dir / filename
         with open(path, 'w', encoding='utf-8') as f:
             f.write(content)
+        logger.info(f"保存到：{path}")
         return path
     
-    def _save_ppt_outline(self, outline: Dict) -> Path:
-        """保存 PPT 大纲"""
-        path = Path(self.config['workspace']['output']) / "ppt_outline.json"
+    def _save_json(self, data: dict, filename: str) -> Path:
+        """保存 JSON 文件"""
+        output_dir = Path(self.config['workspace']['output'])
+        path = output_dir / filename
         with open(path, 'w', encoding='utf-8') as f:
-            import json
-            json.dump(outline, f, ensure_ascii=False, indent=2)
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        logger.info(f"保存到：{path}")
         return path
+    
+    def _generate_summary(self, lecture: str) -> str:
+        """生成摘要"""
+        if not self.ollama:
+            return lecture[:500]
+        
+        prompt = f"请用 200 字总结以下内容:\n\n{lecture[:3000]}"
+        return self.ollama.generate('deepseek-r1:1.5b', prompt) or lecture[:500]
+
+
+def main():
+    """命令行入口"""
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='AI 讲课生成器')
+    parser.add_argument('--source', '-s', required=True, help='输入源 (URL/PDF/文本)')
+    parser.add_argument('--topic', '-t', help='主题 (可选)')
+    parser.add_argument('--duration', '-d', type=int, default=10, help='时长 (分钟)')
+    parser.add_argument('--style', default='大学讲课', help='讲课风格')
+    parser.add_argument('--config', '-c', default='config.yaml', help='配置文件')
+    
+    args = parser.parse_args()
+    
+    # 创建生成器
+    generator = LectureGenerator(args.config)
+    
+    # 生成
+    result = generator.generate(
+        source=args.source,
+        topic=args.topic,
+        duration=args.duration,
+        style=args.style
+    )
+    
+    # 输出结果
+    print("\n" + "=" * 60)
+    if "error" in result:
+        print(f"❌ 失败：{result['error']}")
+    else:
+        print("✅ 生成完成!")
+        print(f"  讲义：{result['lecture_path']}")
+        print(f"  PPT: {result['ppt_path']}")
+        print(f"  测试题：{result['questions_path']}")
+        print(f"  耗时：{result['elapsed_seconds']:.1f}秒")
+        print(f"\n📝 摘要:\n{result['summary'][:300]}...")
+    print("=" * 60)
 
 
 if __name__ == '__main__':
-    # 测试
-    generator = LectureGenerator()
-    
-    # 简单测试
-    result = generator.generate(
-        source="人工智能是计算机科学的一个分支，它试图理解智能的实质...",
-        topic="AI 基础入门",
-        duration=5
-    )
-    
-    print(f"\n生成结果:")
-    print(f"  讲义：{result.get('lecture_path')}")
-    print(f"  PPT: {result.get('ppt_path')}")
+    main()
