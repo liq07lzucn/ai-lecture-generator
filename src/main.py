@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.ollama_client import OllamaClient
 from src.fetcher import URLFetcher, PDFReader
 from src.processor import ContentParser, KnowledgeExtractor, LectureProcessor
+from src.tts import EdgeTTSEngine, AudioMerger
 
 
 class LectureGenerator:
@@ -44,6 +45,8 @@ class LectureGenerator:
         self.parser = ContentParser()
         self.extractor = KnowledgeExtractor(self.ollama)
         self.lecture_gen = LectureProcessor(self.ollama)
+        self.tts = EdgeTTSEngine()
+        self.audio_merger = AudioMerger()
         
         # 设置工作目录
         self._setup_workspace()
@@ -148,6 +151,10 @@ class LectureGenerator:
         logger.info("📋 生成摘要...")
         summary = self._generate_summary(lecture)
         
+        # 9. 生成语音
+        logger.info("🔊 生成语音...")
+        audio_path = self._generate_audio(lecture, topic)
+        
         elapsed = (datetime.now() - start_time).total_seconds()
         logger.info(f"✅ 生成完成！耗时：{elapsed:.1f}秒")
         
@@ -155,6 +162,7 @@ class LectureGenerator:
             "lecture_path": str(lecture_path),
             "ppt_path": str(ppt_path),
             "questions_path": str(questions_path),
+            "audio_path": str(audio_path) if audio_path else None,
             "summary": summary,
             "elapsed_seconds": elapsed,
         }
@@ -194,6 +202,38 @@ class LectureGenerator:
         
         prompt = f"请用 200 字总结以下内容:\n\n{lecture[:3000]}"
         return self.ollama.generate('deepseek-r1:1.5b', prompt) or lecture[:500]
+    
+    def _generate_audio(self, lecture: str, topic: str) -> str:
+        """
+        生成语音
+        
+        Args:
+            lecture: 讲义文本
+            topic: 主题
+        
+        Returns:
+            音频文件路径
+        """
+        try:
+            output_dir = Path(self.config['workspace']['output'])
+            audio_path = output_dir / f"{topic}_语音.mp3"
+            
+            # 使用默认音色
+            voice = self.tts.get_voice_for_style("通俗易懂")
+            
+            # 合成完整讲课稿
+            success = self.tts.synthesize(lecture, str(audio_path), voice=voice)
+            
+            if success:
+                logger.info(f"✅ 语音生成成功：{audio_path}")
+                return str(audio_path)
+            else:
+                logger.warning("⚠️ 语音生成失败")
+                return None
+                
+        except Exception as e:
+            logger.error(f"语音生成失败：{e}")
+            return None
 
 
 def main():
