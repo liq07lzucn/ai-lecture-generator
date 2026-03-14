@@ -246,7 +246,7 @@ class PromptTemplates:
 风格参考：芝麻街、宝宝巴士
 """
 
-    LECTURE profesional = """
+    LECTURE_PROFESSIONAL = """
 你是一位行业专家。请用专业严谨的方式讲解。
 
 主题：{topic}
@@ -321,7 +321,7 @@ class PromptTemplates:
             "questions_interactive": cls.QUESTIONS_INTERACTIVE,
             # 特殊场景
             "lecture_kids": cls.LECTURE_KIDS,
-            "lecture_professional": cls.LECTURE profesional,
+            "lecture_professional": cls.LECTURE_PROFESSIONAL,
             # 辅助工具
             "expand_content": cls.EXPAND_CONTENT,
             "simplify_content": cls.SIMPLIFY_CONTENT,
