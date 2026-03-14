@@ -13,7 +13,7 @@ class ModelConfig:
     """模型配置"""
     
     # 聊天/讲义生成 (主力模型)
-    chat_model: str = "qwen3:8b"
+    chat_model: str = "qwen3:latest"
     
     # 轻量任务 (摘要、分类等)
     light_model: str = "deepseek-r1:1.5b"

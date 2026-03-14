@@ -5,8 +5,8 @@ ollama:
   host: "http://192.168.0.214:11434"
   timeout: 120  # 秒
   models:
-    chat: "qwen3:8b"      # 对话/讲义生成
-    extract: "qwen3:8b"   # 知识点提取
+    chat: "qwen3:latest"      # 对话/讲义生成 (8B)
+    extract: "qwen3:latest"   # 知识点提取
     summary: "deepseek-r1:1.5b"  # 摘要 (轻量)
 
 # 语音合成配置

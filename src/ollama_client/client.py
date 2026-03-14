@@ -109,7 +109,7 @@ class OllamaClient:
     
     def generate(self, model: str, prompt: str, system: str = None) -> str:
         """
-        文本生成 (completion 模式)
+        文本生成 (使用 chat API，兼容性更好)
         
         Args:
             model: 模型名称
@@ -119,24 +119,11 @@ class OllamaClient:
         Returns:
             生成文本
         """
-        url = f"{self.host}/api/generate"
-        payload = {
-            "model": model,
-            "prompt": prompt,
-            "stream": False
-        }
-        
+        messages = [{"role": "user", "content": prompt}]
         if system:
-            payload["system"] = system
+            messages.insert(0, {"role": "system", "content": system})
         
-        try:
-            response = self.session.post(url, json=payload, timeout=self.timeout)
-            response.raise_for_status()
-            result = response.json()
-            return result.get('response', '')
-        except Exception as e:
-            logger.error(f"生成请求失败：{e}")
-            return ""
+        return self.chat(model, messages)
     
     def embed(self, model: str, text: str) -> List[float]:
         """
