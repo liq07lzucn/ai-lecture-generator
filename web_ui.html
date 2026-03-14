@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 讲课生成器</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+        .result-section.show {
+            display: block;
+        }
+        .result-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+        .result-item h3 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        .result-item p {
+            color: #666;
+            font-size: 14px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            display: none;
+        }
+        .loading.show {
+            display: block;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 AI 讲课生成器</h1>
+        <p class="subtitle">一键生成讲义 + PPT + 测试题 + 语音</p>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="text">📝 文本输入</div>
+            <div class="tab" data-tab="url">🌐 URL 输入</div>
+            <div class="tab" data-tab="pdf">📄 PDF 输入</div>
+        </div>
+        
+        <!-- 文本输入 -->
+        <div class="tab-content active" id="text-tab">
+            <div class="form-group">
+                <label for="text-input">输入文本内容</label>
+                <textarea id="text-input" placeholder="请输入要生成讲课的内容..."></textarea>
+            </div>
+        </div>
+        
+        <!-- URL 输入 -->
+        <div class="tab-content" id="url-tab">
+            <div class="form-group">
+                <label for="url-input">输入网页 URL</label>
+                <input type="text" id="url-input" placeholder="https://example.com/article">
+            </div>
+        </div>
+        
+        <!-- PDF 输入 -->
+        <div class="tab-content" id="pdf-tab">
+            <div class="form-group">
+                <label for="pdf-input">PDF 文件路径</label>
+                <input type="text" id="pdf-input" placeholder="./workspace/input/file.pdf">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="topic">课程主题</label>
+            <input type="text" id="topic" placeholder="例如：人工智能基础">
+        </div>
+        
+        <div class="form-group">
+            <label for="duration">讲课时长（分钟）</label>
+            <input type="number" id="duration" value="10" min="5" max="60">
+        </div>
+        
+        <div class="form-group">
+            <label for="style">讲课风格</label>
+            <select id="style">
+                <option value="通俗易懂">通俗易懂（大学生）</option>
+                <option value="故事化">故事化（罗辑思维风格）</option>
+                <option value="辩论式">辩论式（启发式教学）</option>
+                <option value="儿童版">儿童版（芝麻街风格）</option>
+                <option value="专业版">专业版（TED 演讲风格）</option>
+            </select>
+        </div>
+        
+        <button class="btn" id="generate-btn" onclick="generate()">🚀 开始生成</button>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在生成中，请稍候...（约 3-4 分钟）</p>
+        </div>
+        
+        <div class="result-section" id="result">
+            <h2>✅ 生成完成!</h2>
+            <div id="result-content"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Tab 切换
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+            });
+        });
+        
+        // 生成函数
+        async function generate() {
+            const activeTab = document.querySelector('.tab.active').dataset.tab;
+            const topic = document.getElementById('topic').value;
+            const duration = document.getElementById('duration').value;
+            const style = document.getElementById('style').value;
+            
+            let source = '';
+            if (activeTab === 'text') {
+                source = document.getElementById('text-input').value;
+            } else if (activeTab === 'url') {
+                source = document.getElementById('url-input').value;
+            } else if (activeTab === 'pdf') {
+                source = document.getElementById('pdf-input').value;
+            }
+            
+            if (!source || !topic) {
+                alert('请填写内容和主题');
+                return;
+            }
+            
+            // 显示加载状态
+            document.getElementById('generate-btn').disabled = true;
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('result').classList.remove('show');
+            
+            try {
+                // 调用后端 API（需要 Flask/FastAPI 支持）
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        source, topic, duration: parseInt(duration), style
+                    })
+                });
+                
+                const result = await response.json();
+                
+                // 显示结果
+                showResult(result);
+            } catch (error) {
+                alert('生成失败：' + error.message);
+            } finally {
+                document.getElementById('generate-btn').disabled = false;
+                document.getElementById('loading').classList.remove('show');
+            }
+        }
+        
+        function showResult(result) {
+            const content = document.getElementById('result-content');
+            content.innerHTML = `
+                <div class="result-item">
+                    <h3>📄 讲义</h3>
+                    <p>${result.lecture_path || '未生成'}</p>
+                </div>
+                <div class="result-item">
+                    <h3>📊 PPT 大纲</h3>
+                    <p>${result.ppt_path || '未生成'}</p>
+                </div>
+                <div class="result-item">
+                    <h3>❓ 测试题</h3>
+                    <p>${result.questions_path || '未生成'}</p>
+                </div>
+                <div class="result-item">
+                    <h3>🔊 语音</h3>
+                    <p>${result.audio_path || '未生成'}</p>
+                </div>
+                <div class="result-item">
+                    <h3>⏱️ 耗时</h3>
+                    <p>${result.elapsed_seconds?.toFixed(1) || 'N/A'}秒</p>
+                </div>
+            `;
+            document.getElementById('result').classList.add('show');
+        }
+    </script>
+</body>
+</html>
