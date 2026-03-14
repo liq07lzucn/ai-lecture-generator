@@ -1,201 +1,195 @@
 # AI 讲课生成系统
 
-> 本地离线版「今天学点啥」- P104 8G 完美运行
-
-## 🎯 功能目标
-
-- ✅ 自动联网搜文献/资料
-- ✅ 自动读文章、PDF
-- ✅ 自动拆成：讲义 + PPT 大纲
-- ✅ 本地生成超像真人的老师语音
-- ✅ 多种音色、不同讲课风格
-- ✅ 全程不花一分钱，不用 API
-- ✅ 隐私 100%，全部本地运行
-
-## 🏗️ 系统架构
-
-```
-输入层 → 处理层 → 输出层
-  ↓        ↓        ↓
-URL/PDF  内容拆解  讲义文档
-搜索词   知识点提取 PPT 大纲
-        讲义生成   语音音频
-```
-
-## 📁 目录结构
-
-```
-ai-lecture-generator/
-├── README.md                 # 本文档
-├── requirements.txt          # Python 依赖
-├── config.yaml              # 配置文件
-│
-├── src/
-│   ├── __init__.py
-│   ├── main.py              # 主入口
-│   │
-│   ├── fetcher/             # 内容获取
-│   │   ├── __init__.py
-│   │   ├── url_fetcher.py   # 网页抓取
-│   │   ├── pdf_reader.py    # PDF 读取
-│   │   └── search_engine.py # 搜索
-│   │
-│   ├── processor/           # 内容处理
-│   │   ├── __init__.py
-│   │   ├── content_parser.py    # 内容解析
-│   │   ├── knowledge_extractor.py # 知识点提取
-│   │   └── lecture_generator.py # 讲义生成
-│   │
-│   ├── ollama_client/       # Ollama 客户端
-│   │   ├── __init__.py
-│   │   ├── client.py        # API 封装
-│   │   ├── prompts.py       # 提示词模板
-│   │   └── models.py        # 模型配置
-│   │
-│   ├── tts/                 # 语音合成
-│   │   ├── __init__.py
-│   │   ├── fish_speech.py   # Fish Speech 封装
-│   │   └── voice_config.py  # 音色配置
-│   │
-│   └── output/              # 输出处理
-│       ├── __init__.py
-│       ├── pdf_generator.py # PDF 生成
-│       ├── ppt_generator.py # PPT 生成
-│       └── audio_merger.py  # 音频合并
-│
-├── workspace/               # 工作目录
-│   ├── input/              # 输入文件
-│   ├── output/             # 输出文件
-│   ├── cache/              # 缓存
-│   └── temp/               # 临时文件
-│
-├── tests/                   # 测试
-│   ├── test_fetcher.py
-│   ├── test_processor.py
-│   └── test_tts.py
-│
-└── examples/                # 示例
-    ├── example_lecture.py
-    └── sample_input.md
-```
-
-## 🔧 技术栈
-
-| 模块 | 技术 | 说明 |
-|------|------|------|
-| **大模型** | Ollama | qwen3:8b / deepseek-r1:1.5b |
-| **语音合成** | Fish Speech | 本地运行，8G 显存 |
-| **内容抓取** | requests + BeautifulSoup | 网页解析 |
-| **PDF 处理** | PyMuPDF | PDF 读取 |
-| **流程调度** | OpenClaw | 自动化流程 |
-| **开发语言** | Python 3.10+ | 主语言 |
+> 🎯 本地离线版「今天学点啥」- 一键生成讲义 + PPT + 测试题
 
 ## 🚀 快速开始
 
-### 1. 环境准备
-
 ```bash
-# 创建虚拟环境
-python3 -m venv .venv
-source .venv/bin/activate
-
-# 安装依赖
+# 1. 安装依赖
 pip install -r requirements.txt
+
+# 2. 运行示例
+python3 examples/example_basic.py
+
+# 3. 命令行使用
+python3 src/main.py -s "人工智能是..." -t "AI 基础" -d 10
 ```
 
-### 2. 配置 Ollama
+## ✨ 核心功能
 
-```bash
-# 测试连接
-curl http://192.168.0.214:11434/api/tags
+| 功能 | 状态 | 说明 |
+|------|------|------|
+| 📥 内容获取 | ✅ | URL/PDF/文本 |
+| 🧠 知识点提取 | ✅ | AI 智能分析 |
+| 📚 讲义生成 | ✅ | 多种风格 |
+| 📊 PPT 大纲 | ✅ | JSON 格式 |
+| ❓ 测试题 | ✅ | 自动出题 |
+| 🔊 语音合成 | ⏳ | 待集成 |
 
-# 拉取模型（如需要）
-ollama pull qwen3:8b
+## 📁 项目结构
+
+```
+ai-lecture-generator/
+├── src/                      # 源代码
+│   ├── main.py              # 主入口
+│   ├── ollama_client/       # Ollama 客户端
+│   ├── fetcher/             # 内容获取
+│   ├── processor/           # 内容处理
+│   └── tts/                 # 语音合成
+├── examples/                 # 使用示例
+├── workspace/                # 工作目录
+│   ├── input/               # 输入文件
+│   └── output/              # 输出文件
+├── config.yaml               # 配置文件
+└── requirements.txt          # 依赖
 ```
 
-### 3. 安装 Fish Speech
+## 🎯 使用示例
 
-```bash
-# 克隆仓库
-git clone https://github.com/fishaudio/fish-speech.git
-cd fish-speech
-
-# 安装依赖
-pip install -e .
-```
-
-### 4. 运行示例
-
-```bash
-python src/main.py --input "https://example.com/article" --output "./workspace/output"
-```
-
-## 📝 使用示例
-
-### 示例 1: 从 URL 生成讲课
+### 从文本生成
 
 ```python
 from src.main import LectureGenerator
 
 generator = LectureGenerator()
 
-# 从网页生成
 result = generator.generate(
-    source="https://arxiv.org/abs/2301.12345",
-    topic="AI 基础知识",
-    duration=10,  # 分钟
-    voice="teacher_male"
+    source="人工智能是计算机科学的一个分支...",
+    topic="AI 基础入门",
+    duration=10
 )
 
-print(f"讲义：{result.lecture_path}")
-print(f"音频：{result.audio_path}")
+print(f"讲义：{result['lecture_path']}")
+print(f"PPT: {result['ppt_path']}")
+print(f"测试题：{result['questions_path']}")
 ```
 
-### 示例 2: 从 PDF 生成
+### 命令行
 
-```python
-result = generator.generate(
-    source="./workspace/input/paper.pdf",
-    topic="机器学习导论",
-    style="university",  # 大学讲课风格
-    voice="teacher_female"
-)
+```bash
+# 从文本
+python3 src/main.py -s "人工智能是..." -t "AI 基础" -d 10
+
+# 从 URL
+python3 src/main.py -s "https://zh.wikipedia.org/wiki/人工智能" -t "AI 入门"
+
+# 从 PDF
+python3 src/main.py -s "./paper.pdf" -t "论文讲解" -d 15
 ```
 
-## 🎙️ 可用音色
+## 🎨 支持的讲义风格
 
-| 音色 ID | 描述 | 适用场景 |
-|--------|------|---------|
-| teacher_male | 男老师 | 正式讲课 |
-| teacher_female | 女老师 | 温和讲解 |
-| narrator | 解说员 | 纪录片风格 |
-| storyteller | 讲故事 | 轻松学习 |
+- ✅ 通俗易懂（大学生）
+- ✅ 故事化（罗辑思维风格）
+- ✅ 辩论式（启发式教学）
+- ✅ 儿童版（芝麻街风格）
+- ✅ 专业版（TED 演讲风格）
 
-## 📊 性能指标
+## 📊 输出示例
 
-| 任务 | 耗时 | 显存占用 |
-|------|------|---------|
-| 内容拆解 (1 万字) | ~30 秒 | 5GB |
-| 讲义生成 | ~20 秒 | 5GB |
-| 语音合成 (10 分钟) | ~2 分钟 | 6GB |
-| **总计** | **~3 分钟** | **峰值 6GB** |
+### 讲义（Markdown）
 
-## ⚠️ 注意事项
+```markdown
+【开场白】（1 分 30 秒）
+各位同学好！今天我们要聊一个超酷的话题——人工智能！...
 
-1. **显存管理**: P104 8G 足够，但避免同时运行多个大模型
-2. **语音模型**: Fish Speech 首次加载需要下载权重 (~2GB)
-3. **Ollama 连接**: 确保局域网可达 (192.168.0.214:11434)
-4. **存储空间**: 预留至少 10GB 用于模型和缓存
+【知识点讲解】（3 分 30 秒）
+1. 人工智能的定义（1 分钟）
+2. 人工智能的三个阶段（2 分 30 秒）
 
-## 🛠️ 开发计划
+【互动环节】（2 分钟）
+问题 1：以下哪个例子属于符号主义阶段？...
 
-- [ ] 基础框架搭建
-- [ ] Ollama 客户端封装
-- [ ] 内容抓取模块
-- [ ] 讲义生成提示词优化
-- [ ] Fish Speech 集成
-- [ ] PDF/PPT 输出
-- [ ] Web UI (可选)
+【总结回顾】（1 分 30 秒）
+今天我们用 5 分钟，穿越了 AI 的三个发展阶段...
+```
+
+### PPT 大纲（JSON）
+
+```json
+{
+  "title": "人工智能基础",
+  "slides": [
+    {"page": 1, "title": "封面", "points": [...]},
+    {"page": 2, "title": "目录", "points": [...]},
+    ...
+  ]
+}
+```
+
+### 测试题（JSON）
+
+```json
+[
+  {
+    "type": "single_choice",
+    "question": "以下哪个例子属于符号主义阶段？",
+    "options": ["A. ...", "B. ..."],
+    "answer": "C"
+  },
+  ...
+]
+```
+
+## ⚙️ 配置
+
+编辑 `config.yaml`:
+
+```yaml
+ollama:
+  host: "http://192.168.0.214:11434"
+  timeout: 120
+  models:
+    chat: "qwen3:latest"
+    summary: "deepseek-r1:1.5b"
+
+workspace:
+  root: "./workspace"
+  output: "./workspace/output"
+```
+
+## 🧪 测试
+
+```bash
+# 运行示例
+python3 examples/example_basic.py
+
+# 测试 Ollama 连接
+python3 src/ollama_client/client.py
+
+# 测试提示词模板
+python3 src/ollama_client/prompts.py
+```
+
+## 📈 性能指标
+
+| 任务 | 耗时 |
+|------|------|
+| 内容解析 | <1 秒 |
+| 知识点提取 | ~60 秒 |
+| 讲义生成 | ~40 秒 |
+| PPT 大纲 | ~40 秒 |
+| 测试题 | ~30 秒 |
+| **总计** | **~3 分钟** |
+
+## 🛠️ 技术栈
+
+- **大模型**: Ollama (qwen3:8b, deepseek-r1:1.5b)
+- **内容抓取**: requests + BeautifulSoup
+- **PDF 处理**: PyMuPDF
+- **流程调度**: Python 原生
+- **开发语言**: Python 3.10+
+
+## 📝 开发计划
+
+- [x] 基础框架搭建
+- [x] Ollama 客户端封装
+- [x] 内容抓取模块
+- [x] 讲义生成提示词优化
+- [x] PPT 大纲生成
+- [x] 测试题生成
+- [ ] 语音合成 (Fish Speech / Edge TTS)
+- [ ] Web UI 界面
 - [ ] 批量处理支持
 
 ## 📄 许可证
@@ -204,4 +198,4 @@ MIT License
 
 ---
 
-*🦞 龙虾 41 号 2026-03-14*
+🦞 龙虾 41 号 2026-03-14
