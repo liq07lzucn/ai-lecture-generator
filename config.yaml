@@ -1,0 +1,49 @@
+# AI 讲课生成系统 - 配置文件
+
+# Ollama 配置
+ollama:
+  host: "http://192.168.0.214:11434"
+  timeout: 120  # 秒
+  models:
+    chat: "qwen3:8b"      # 对话/讲义生成
+    extract: "qwen3:8b"   # 知识点提取
+    summary: "deepseek-r1:1.5b"  # 摘要 (轻量)
+
+# 语音合成配置
+tts:
+  provider: "fish_speech"
+  model_path: "./models/fish_speech"
+  device: "cuda"  # cuda / cpu
+  voices:
+    teacher_male:
+      speaker_id: "中文男老师"
+      speed: 1.0
+      pitch: 0
+    teacher_female:
+      speaker_id: "中文女老师"
+      speed: 1.0
+      pitch: 0
+    narrator:
+      speaker_id: "解说员"
+      speed: 0.9
+      pitch: -2
+
+# 工作目录
+workspace:
+  root: "./workspace"
+  input: "./workspace/input"
+  output: "./workspace/output"
+  cache: "./workspace/cache"
+  temp: "./workspace/temp"
+
+# 生成配置
+generation:
+  max_content_length: 50000  # 最大字符数
+  chunk_size: 5000  # 分块处理大小
+  default_duration: 10  # 默认讲课时长 (分钟)
+  
+# 日志配置
+logging:
+  level: "INFO"
+  file: "./logs/lecture_generator.log"
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}"

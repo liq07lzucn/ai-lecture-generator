@@ -1,0 +1,34 @@
+# AI 讲课生成系统 - 依赖包
+
+# 核心依赖
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=5.1.0
+
+# PDF 处理
+PyMuPDF>=1.23.0
+pdfplumber>=0.10.0
+
+# Ollama 客户端
+ollama>=0.1.0
+
+# 语音合成 (Fish Speech)
+# 需要单独安装：pip install fish-speech
+
+# 工具库
+pyyaml>=6.0
+tqdm>=4.66.0
+loguru>=0.7.0
+
+# 输出处理
+python-pptx>=0.6.23
+reportlab>=4.0.0
+
+# 音频处理
+pydub>=0.25.0
+soundfile>=0.12.0
+
+# 开发工具
+pytest>=8.0.0
+black>=24.0.0
+flake8>=7.0.0
