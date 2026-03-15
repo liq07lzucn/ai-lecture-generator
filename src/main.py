@@ -177,10 +177,18 @@ class LectureGenerator:
             # 直接作为文本
             return source
     
-    def _save_output(self, content: str, filename: str) -> Path:
+    def _save_output(self, content: str, filename: str, session_id: str = None) -> Path:
         """保存输出文件"""
         output_dir = Path(self.config['workspace']['output'])
-        path = output_dir / filename
+        
+        # 如果有 session_id，创建子文件夹
+        if session_id:
+            session_dir = output_dir / f"session_{session_id}"
+            session_dir.mkdir(parents=True, exist_ok=True)
+            path = session_dir / filename
+        else:
+            path = output_dir / filename
+        
         with open(path, 'w', encoding='utf-8') as f:
             f.write(content)
         logger.info(f"保存到：{path}")
