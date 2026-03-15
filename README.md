@@ -1,167 +1,152 @@
-# AI 讲课生成系统
+# 🎯 AI 讲课生成系统
 
-> 🎯 本地离线版「今天学点啥」- 一键生成讲义 + PPT + 测试题
+> 一键生成完整讲课内容：讲义 + PPT + 测试题 + 语音
+
+## ✨ 功能特点
+
+- 📥 **多种输入**: 支持文本、URL、PDF
+- 🧠 **AI 分析**: 自动提取知识点
+- 📚 **讲义生成**: 5 种风格（通俗/故事/儿童/专业）
+- 📊 **PPT 大纲**: 自动生成 12-18 页幻灯片
+- ❓ **测试题**: 混合题型（选择/判断/简答）
+- 🔊 **语音合成**: Edge TTS，8 种中文音色
+- 📜 **历史记录**: 查看所有生成的课程
+- 💾 **一键下载**: 打包下载所有文件
 
 ## 🚀 快速开始
 
+### 1. 安装依赖
+
 ```bash
-# 1. 安装依赖
 pip install -r requirements.txt
+```
 
-# 2. 运行示例
-python3 examples/example_basic.py
+### 2. 启动 Web 服务
 
-# 3. 命令行使用
+```bash
+./start.sh
+```
+
+**启动后会显示**:
+```
+🦞 AI 讲课生成器 - 启动中...
+访问：http://localhost:5000
+
+ * Serving Flask app 'web_simple'
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.41:5000
+```
+
+### 3. 访问界面
+
+打开浏览器访问：`http://localhost:5000`
+
+**界面预览**:
+```
+┌─────────────────────────────────────┐
+│  🎯 AI 讲课生成器                    │
+│  输入主题，一键生成讲义+PPT+ 语音     │
+├─────────────────────────────────────┤
+│ 📚 已生成 3 个课程   [📜 查看历史记录] │
+├─────────────────────────────────────┤
+│ 📝 课程主题 *                        │
+│ [输入框：例如：人工智能基础]          │
+│                                      │
+│ 📄 参考资料 (可选)                   │
+│ [文本框：粘贴相关文章...]            │
+│                                      │
+│ ⏱️ 时长：[10 分钟 ▼]                │
+│ 🎨 风格：[通俗易懂 ▼]               │
+│                                      │
+│ [    🚀 开始生成    ]               │
+└─────────────────────────────────────┘
+```
+
+### 4. 生成课程
+
+1. 输入课程主题（必填）
+2. 粘贴参考资料（可选）
+3. 选择时长和风格
+4. 点击"开始生成"
+5. 等待 3-4 分钟
+6. 查看结果并下载
+
+### 5. 查看历史记录
+
+- 点击顶部 "📜 查看历史记录" 按钮
+- 弹窗显示所有已生成的课程
+- 点击 "📄 讲义" 查看或下载
+- 点击 "🔊 语音" 在线播放
+
+## 📝 使用示例
+
+### Web 界面（推荐）
+
+启动服务后访问 `http://localhost:5000`，可视化操作更简单！
+
+### 命令行使用
+
+```bash
+# 从文本生成
 python3 src/main.py -s "人工智能是..." -t "AI 基础" -d 10
+
+# 从 URL 生成
+python3 src/main.py -s "https://example.com/article" -t "主题"
+
+# 从 PDF 生成
+python3 src/main.py -s "./paper.pdf" -t "论文讲解" -d 15
 ```
 
-## ✨ 核心功能
-
-| 功能 | 状态 | 说明 |
-|------|------|------|
-| 📥 内容获取 | ✅ | URL/PDF/文本 |
-| 🧠 知识点提取 | ✅ | AI 智能分析 |
-| 📚 讲义生成 | ✅ | 多种风格 |
-| 📊 PPT 大纲 | ✅ | JSON 格式 |
-| ❓ 测试题 | ✅ | 自动出题 |
-| 🔊 语音合成 | ⏳ | 待集成 |
-
-## 📁 项目结构
-
-```
-ai-lecture-generator/
-├── src/                      # 源代码
-│   ├── main.py              # 主入口
-│   ├── ollama_client/       # Ollama 客户端
-│   ├── fetcher/             # 内容获取
-│   ├── processor/           # 内容处理
-│   └── tts/                 # 语音合成
-├── examples/                 # 使用示例
-├── workspace/                # 工作目录
-│   ├── input/               # 输入文件
-│   └── output/              # 输出文件
-├── config.yaml               # 配置文件
-└── requirements.txt          # 依赖
-```
-
-## 🎯 使用示例
-
-### 从文本生成
+### Python 代码
 
 ```python
 from src.main import LectureGenerator
 
 generator = LectureGenerator()
-
 result = generator.generate(
-    source="人工智能是计算机科学的一个分支...",
-    topic="AI 基础入门",
+    source="你的内容",
+    topic="AI 基础",
     duration=10
 )
 
 print(f"讲义：{result['lecture_path']}")
-print(f"PPT: {result['ppt_path']}")
-print(f"测试题：{result['questions_path']}")
+print(f"语音：{result['audio_path']}")
 ```
 
-### 命令行
+## 🛠️ 技术栈
 
-```bash
-# 从文本
-python3 src/main.py -s "人工智能是..." -t "AI 基础" -d 10
+- **后端**: Python 3.10+, Flask
+- **大模型**: Ollama (qwen3:8b, deepseek-r1:1.5b)
+- **语音**: Edge TTS (免费)
+- **PDF**: PyMuPDF
+- **网页抓取**: BeautifulSoup
 
-# 从 URL
-python3 src/main.py -s "https://zh.wikipedia.org/wiki/人工智能" -t "AI 入门"
+## 📁 项目结构
 
-# 从 PDF
-python3 src/main.py -s "./paper.pdf" -t "论文讲解" -d 15
+```
+ai-lecture-generator/
+├── src/                    # 源代码
+│   ├── main.py            # 主入口
+│   ├── ollama_client/     # Ollama 封装
+│   ├── fetcher/           # 内容获取
+│   ├── processor/         # 内容处理
+│   └── tts/               # 语音合成
+├── examples/               # 使用示例
+├── workspace/              # 工作目录
+│   ├── output/            # 生成的文件
+│   │   ├── 讲义.md
+│   │   ├── PPT 大纲.json
+│   │   ├── 测试题.json
+│   │   └── 语音.mp3
+│   └── input/             # 输入文件
+├── config.yaml             # 配置
+├── requirements.txt        # 依赖
+├── start.sh                # 启动脚本
+├── web_simple.py           # Web 服务
+└── README.md               # 本文档
 ```
 
-## 🎨 支持的讲义风格
-
-- ✅ 通俗易懂（大学生）
-- ✅ 故事化（罗辑思维风格）
-- ✅ 辩论式（启发式教学）
-- ✅ 儿童版（芝麻街风格）
-- ✅ 专业版（TED 演讲风格）
-
-## 📊 输出示例
-
-### 讲义（Markdown）
-
-```markdown
-【开场白】（1 分 30 秒）
-各位同学好！今天我们要聊一个超酷的话题——人工智能！...
-
-【知识点讲解】（3 分 30 秒）
-1. 人工智能的定义（1 分钟）
-2. 人工智能的三个阶段（2 分 30 秒）
-
-【互动环节】（2 分钟）
-问题 1：以下哪个例子属于符号主义阶段？...
-
-【总结回顾】（1 分 30 秒）
-今天我们用 5 分钟，穿越了 AI 的三个发展阶段...
-```
-
-### PPT 大纲（JSON）
-
-```json
-{
-  "title": "人工智能基础",
-  "slides": [
-    {"page": 1, "title": "封面", "points": [...]},
-    {"page": 2, "title": "目录", "points": [...]},
-    ...
-  ]
-}
-```
-
-### 测试题（JSON）
-
-```json
-[
-  {
-    "type": "single_choice",
-    "question": "以下哪个例子属于符号主义阶段？",
-    "options": ["A. ...", "B. ..."],
-    "answer": "C"
-  },
-  ...
-]
-```
-
-## ⚙️ 配置
-
-编辑 `config.yaml`:
-
-```yaml
-ollama:
-  host: "http://192.168.0.214:11434"
-  timeout: 120
-  models:
-    chat: "qwen3:latest"
-    summary: "deepseek-r1:1.5b"
-
-workspace:
-  root: "./workspace"
-  output: "./workspace/output"
-```
-
-## 🧪 测试
-
-```bash
-# 运行示例
-python3 examples/example_basic.py
-
-# 测试 Ollama 连接
-python3 src/ollama_client/client.py
-
-# 测试提示词模板
-python3 src/ollama_client/prompts.py
-```
-
-## 📈 性能指标
+## 📊 性能指标
 
 | 任务 | 耗时 |
 |------|------|
@@ -170,27 +155,21 @@ python3 src/ollama_client/prompts.py
 | 讲义生成 | ~40 秒 |
 | PPT 大纲 | ~40 秒 |
 | 测试题 | ~30 秒 |
-| **总计** | **~3 分钟** |
+| 语音合成 | ~60 秒 |
+| **总计** | **~3-4 分钟** |
 
-## 🛠️ 技术栈
+**实际体验**:
+- 提交任务 → 等待进度条 → 完成提示
+- 可关闭浏览器，完成后查看历史记录
 
-- **大模型**: Ollama (qwen3:8b, deepseek-r1:1.5b)
-- **内容抓取**: requests + BeautifulSoup
-- **PDF 处理**: PyMuPDF
-- **流程调度**: Python 原生
-- **开发语言**: Python 3.10+
+## 🎨 支持的讲义风格
 
-## 📝 开发计划
-
-- [x] 基础框架搭建
-- [x] Ollama 客户端封装
-- [x] 内容抓取模块
-- [x] 讲义生成提示词优化
-- [x] PPT 大纲生成
-- [x] 测试题生成
-- [ ] 语音合成 (Fish Speech / Edge TTS)
-- [ ] Web UI 界面
-- [ ] 批量处理支持
+| 风格 | 说明 | 适用场景 |
+|------|------|---------|
+| 通俗易懂 | 适合大学生 | 普通课程 |
+| 故事化 | 罗辑思维风格 | 趣味讲解 |
+| 儿童版 | 芝麻街风格 | 少儿教育 |
+| 专业版 | TED 演讲风格 | 学术报告 |
 
 ## 📄 许可证
 
@@ -198,4 +177,4 @@ MIT License
 
 ---
 
-🦞 龙虾 41 号 2026-03-14
+🦞 龙虾 41 号 | 2026-03-15
