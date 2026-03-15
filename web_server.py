@@ -121,6 +121,11 @@ HTML_TEMPLATE = """
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .result { display: none; margin-top: 30px; }
         .result.show { display: block; }
+        .history-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .history-content { background: white; margin: 50px auto; padding: 30px; border-radius: 12px; max-width: 600px; max-height: 500px; overflow-y: auto; position: relative; }
+        .history-item { padding: 15px; border-bottom: 1px solid #e0e0e0; }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: #888; }
+        .close-btn:hover { color: #333; }
         .result-header {
             background: #f8f9fa;
             padding: 20px;
@@ -538,6 +543,20 @@ def serve_output(filename):
     return send_from_directory('./workspace/output', filename)
 
 if __name__ == '__main__':
+    print("\n" + "=" * 60)
+    print("🦞 AI 讲课生成器 - Web 服务")
+    print("=" * 60)
+    print("\n访问地址：http://localhost:5000")
+    print("按 Ctrl+C 停止服务\n")
+    
+    try:
+        import flask
+    except ImportError:
+        print("⚠️  正在安装 Flask...")
+        os.system("pip3 install flask --break-system-packages -q")
+    
+    app.run(host='0.0.0.0', port=5000, debug=False)
+
     print("\n" + "=" * 60)
     print("🦞 AI 讲课生成器 - Web 服务")
     print("=" * 60)
