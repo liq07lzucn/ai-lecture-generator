@@ -208,6 +208,11 @@ def api_generate():
 def serve_output(filename):
     return send_from_directory('./workspace/output', filename)
 
+@app.route('/file/<filename>')
+def serve_file(filename):
+    """提供输出文件访问"""
+    return send_from_directory('./workspace/output', filename)
+
 if __name__ == '__main__':
     print("\n" + "=" * 60)
     print("🦞 AI 讲课生成器 - Web 服务")
@@ -220,5 +225,8 @@ if __name__ == '__main__':
     except ImportError:
         print("⚠️  正在安装 Flask...")
         os.system("pip3 install flask --break-system-packages -q")
+    
+    app.run(host='0.0.0.0', port=5000, debug=False)
+"pip3 install flask --break-system-packages -q")
     
     app.run(host='0.0.0.0', port=5000, debug=False)
