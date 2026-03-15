@@ -158,6 +158,9 @@ class LectureGenerator:
         elapsed = (datetime.now() - start_time).total_seconds()
         logger.info(f"✅ 生成完成！耗时：{elapsed:.1f}秒")
         
+        # 生成 session_id 用于文件夹命名
+        session_id = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
         return {
             "lecture_path": str(lecture_path),
             "ppt_path": str(ppt_path),
@@ -165,6 +168,7 @@ class LectureGenerator:
             "audio_path": str(audio_path) if audio_path else None,
             "summary": summary,
             "elapsed_seconds": elapsed,
+            "session_id": session_id,
         }
     
     def _fetch_content(self, source: str) -> str:
