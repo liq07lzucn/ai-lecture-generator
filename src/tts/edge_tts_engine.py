@@ -169,10 +169,8 @@ class AudioMerger:
             from pydub import AudioSegment
             self.AudioSegment = AudioSegment
             self.available = True
-            logger.info("✅ pydub 已加载")
         except ImportError:
             self.available = False
-            logger.warning("⚠️ pydub 未安装，音频合并功能不可用")
     
     def merge_files(self, audio_files: List[str], output_path: str) -> bool:
         """
