@@ -213,6 +213,42 @@ HTML_TEMPLATE = """
     </div>
     
     <script>
+        // 加载历史记录数量
+        fetch('/api/history')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('history-count').textContent = '📚 已生成 ' + data.length + ' 个课程';
+            })
+            .catch(() => {
+                document.getElementById('history-count').textContent = '📚 历史记录';
+            });
+        
+        function showHistory() {
+            fetch('/api/history')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.length === 0) {
+                        alert('还没有历史记录');
+                        return;
+                    }
+                    
+                    let html = '<div style="max-height: 400px; overflow-y: auto; text-align: left;">';
+                    data.forEach((item, i) => {
+                        html += '<div style="padding: 15px; border-bottom: 1px solid #e0e0e0;">';
+                        html += '<strong>' + (i+1) + '. ' + item.topic + '</strong><br>';
+                        html += '<small style="color: #888;">📅 ' + new Date(item.timestamp).toLocaleString() + ' | ⏱️ ' + item.elapsed_seconds.toFixed(0) + '秒</small><br>';
+                        html += '<a href="/workspace/output/' + item.lecture_path.split('/').pop() + '" target="_blank" style="color: #667eea;">📄 查看讲义</a>';
+                        if (item.audio_path) {
+                            html += ' | <a href="' + item.audio_path + '" target="_blank">🔊 播放语音</a>';
+                        }
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                    
+                    alert(html);
+                });
+        }
+        
         async function generate(e) {
             e.preventDefault();
             
