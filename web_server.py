@@ -55,6 +55,27 @@ HTML_TEMPLATE = """
         }
         .header h1 { font-size: 36px; margin-bottom: 10px; }
         .header p { opacity: 0.9; font-size: 16px; }
+        .history-bar {
+            background: #f8f9fa;
+            padding: 15px 40px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .history-count { color: #667eea; font-weight: 600; font-size: 15px; }
+        .btn-history {
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-history:hover { background: #667eea; color: white; }
         .content { padding: 40px; }
         .form-group { margin-bottom: 25px; }
         label { display: block; margin-bottom: 8px; color: #555; font-weight: 600; font-size: 15px; }
